@@ -8,13 +8,13 @@ enum OpCode {
     JUMPIFZ,
     JUMPLT,
     JUMPEQ,
-    EXIT
+    EXIT,
 }
 
 impl OpCode {
     fn from(chars: &mut Vec<char>) -> Self {
-
-        let opcode = chars.pop().unwrap().to_digit(10).unwrap() + (chars.pop().unwrap_or('0').to_digit(10).unwrap()) * 10;
+        let opcode = chars.pop().unwrap().to_digit(10).unwrap()
+            + (chars.pop().unwrap_or('0').to_digit(10).unwrap()) * 10;
 
         match opcode {
             1 => OpCode::ADD,
@@ -26,7 +26,7 @@ impl OpCode {
             7 => OpCode::JUMPLT,
             8 => OpCode::JUMPEQ,
             99 => OpCode::EXIT,
-            x => panic!("Unrecognized opcode {}", x)
+            x => panic!("Unrecognized opcode {}", x),
         }
     }
 }
@@ -39,11 +39,10 @@ enum ReferenceType {
 
 impl ReferenceType {
     fn from(c: char) -> Self {
-
         match c {
             '1' => ReferenceType::DIRECT,
             '0' => ReferenceType::INDIRECT,
-            x => panic!("Unrecognized reference type {}", x)
+            x => panic!("Unrecognized reference type {}", x),
         }
     }
 }
@@ -56,10 +55,13 @@ struct Computer {
 }
 
 impl Computer {
-
     fn new_from_file(filename: &str) -> Self {
         Computer {
-            memory: std::fs::read_to_string(filename).unwrap().split(',').map(|input| input.parse::<i64>().unwrap()).collect(),
+            memory: std::fs::read_to_string(filename)
+                .unwrap()
+                .split(',')
+                .map(|input| input.parse::<i64>().unwrap())
+                .collect(),
             ..Default::default()
         }
     }
@@ -87,7 +89,7 @@ impl Computer {
 
     fn run(mut self, mut inputs: Vec<i64>) -> i64 {
         loop {
-            self.instruction_chars = self.get_instruction();            
+            self.instruction_chars = self.get_instruction();
             let opcode = OpCode::from(&mut self.instruction_chars);
             println!("{:?}", opcode);
 
@@ -95,53 +97,45 @@ impl Computer {
                 OpCode::ADD => {
                     let val = self.get_next_value() + self.get_next_value();
                     self.write(val);
-                },
+                }
                 OpCode::MULTIPLY => {
                     let val = self.get_next_value() * self.get_next_value();
                     self.write(val);
-                },
+                }
                 OpCode::INPUT => {
                     self.write(inputs.remove(0));
-                },
+                }
                 OpCode::OUTPUT => {
                     let v1 = self.get_next_value();
                     if v1 != 0 {
                         return v1;
                     }
-                },
+                }
                 OpCode::JUMPIFZ => {
                     let (v1, v2) = (self.get_next_value(), self.get_next_value());
                     if v1 == 0 {
                         println!("Jump!");
                         self.index = v2 as usize;
                     }
-                },
+                }
                 OpCode::JUMPIFNZ => {
-                    let (v1, v2) = (self.get_next_value(), self.get_next_value());                    
+                    let (v1, v2) = (self.get_next_value(), self.get_next_value());
                     if v1 != 0 {
                         println!("Jump!");
                         self.index = v2 as usize;
                     }
-                },
+                }
                 OpCode::JUMPLT => {
                     let (v1, v2) = (self.get_next_value(), self.get_next_value());
-                    self.write(if v1 < v2 {                    
-                        1
-                    } else {
-                        0
-                    });
-                },
+                    self.write(if v1 < v2 { 1 } else { 0 });
+                }
                 OpCode::JUMPEQ => {
                     let (v1, v2) = (self.get_next_value(), self.get_next_value());
-                    self.write(if v1 == v2 {
-                        1
-                    } else {
-                        0
-                    });
-                },                                    
+                    self.write(if v1 == v2 { 1 } else { 0 });
+                }
                 OpCode::EXIT => {
                     break;
-                },
+                }
             };
         }
 
@@ -150,7 +144,6 @@ impl Computer {
 }
 
 fn main() {
-    
     let computer = Computer::new_from_file("inputs.txt");
     let mut orderings = Vec::<Vec<i64>>::new();
 
@@ -159,8 +152,8 @@ fn main() {
             for kk in 0..5 {
                 for ll in 0..5 {
                     for mm in 0..5 {
-                        let phase_settings : Vec<i64> = vec![ii, jj, kk, ll, mm];
-                        let set : std::collections::HashSet<_> = phase_settings.iter().collect();
+                        let phase_settings: Vec<i64> = vec![ii, jj, kk, ll, mm];
+                        let set: std::collections::HashSet<_> = phase_settings.iter().collect();
                         if set.len() != 5 {
                             continue;
                         }
@@ -172,15 +165,20 @@ fn main() {
         }
     }
 
-    let max = orderings.into_iter().map(|mut ordering| {
-        print!("Ordering {:?}", ordering);   
-        let mut next_input = 0;     
-        while !ordering.is_empty() {
-            next_input = computer.clone().run(vec![ordering.remove(0).clone(), next_input]);
-        }
-        println!("-> {}", next_input);
-        next_input
-    }).max();
+    let max = orderings
+        .into_iter()
+        .map(|mut ordering| {
+            print!("Ordering {:?}", ordering);
+            let mut next_input = 0;
+            while !ordering.is_empty() {
+                next_input = computer
+                    .clone()
+                    .run(vec![ordering.remove(0), next_input]);
+            }
+            println!("-> {}", next_input);
+            next_input
+        })
+        .max();
 
     println!("Max output {}", max.unwrap());
 }
